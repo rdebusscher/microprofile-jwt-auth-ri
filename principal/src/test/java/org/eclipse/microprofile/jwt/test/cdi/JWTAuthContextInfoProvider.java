@@ -35,7 +35,7 @@ import java.security.interfaces.RSAPublicKey;
  * A simple producer for JWTAuthContextInfo needed for verify the test tokens
  */
 public class JWTAuthContextInfoProvider {
-    private JWTAuthContextInfo contextInfo;
+    private DefaultJWTAuthContextInfo contextInfo;
 
     /**
      * Create the JWTAuthContextInfo using https://server.example.com as the issuer and the test resources
@@ -45,7 +45,7 @@ public class JWTAuthContextInfoProvider {
      */
     @PostConstruct
     void init() {
-        contextInfo = new JWTAuthContextInfo();
+        contextInfo = new DefaultJWTAuthContextInfo();
         contextInfo.setIssuedBy("https://server.example.com");
         InputStream pkIS = getClass().getResourceAsStream("/publicKey.pem");
         BufferedReader bis = new BufferedReader(new InputStreamReader(pkIS));

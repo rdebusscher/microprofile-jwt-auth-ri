@@ -23,6 +23,7 @@ import org.eclipse.microprofile.jwt.principal.JWTAuthContextInfo;
 import org.eclipse.microprofile.jwt.principal.JWTCallerPrincipal;
 import org.eclipse.microprofile.jwt.principal.JWTCallerPrincipalFactory;
 import org.eclipse.microprofile.jwt.principal.ParseException;
+import org.eclipse.microprofile.jwt.test.cdi.DefaultJWTAuthContextInfo;
 import org.eclipse.microprofile.jwt.test.cdi.WeldJUnit4Runner;
 import org.eclipse.microprofile.jwt.test.util.TokenUtils;
 import org.junit.Assert;
@@ -94,7 +95,7 @@ public class TestTokenValidation {
         String jwt = generateTokenString("/jwk-content1.json");
         System.out.printf("jwt: %s\n", jwt);
         JWTCallerPrincipalFactory factory = JWTCallerPrincipalFactory.instance();
-        JWTAuthContextInfo noExpACI = new JWTAuthContextInfo(authContextInfo);
+        DefaultJWTAuthContextInfo noExpACI = new DefaultJWTAuthContextInfo(authContextInfo);
         noExpACI.setExpGracePeriodSecs(-1);
         JWTCallerPrincipal callerPrincipal = factory.parse(jwt, noExpACI);
         System.out.printf("Parsed caller principal: %s\n", callerPrincipal.toString(true));
