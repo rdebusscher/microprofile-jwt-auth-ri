@@ -1,0 +1,6 @@
+Microprofile JWT RI for Principal Parsing
+Copyright by Rudy De Busscher
+
+------------------------------------------------------------------------
+See the file LICENSE.txt
+------------------------------------------------------------------------

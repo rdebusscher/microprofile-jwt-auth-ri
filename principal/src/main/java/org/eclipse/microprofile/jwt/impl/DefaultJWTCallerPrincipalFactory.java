@@ -1,12 +1,9 @@
 /*
- * Copyright (c) 2016-2017 Contributors to the Eclipse Foundation
+ * Copyright 017 Rudy De Busscher (www.c4j.be)
  *
- *  See the NOTICE file(s) distributed with this work for additional
- *  information regarding copyright ownership.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  You may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,17 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 package org.eclipse.microprofile.jwt.impl;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import org.eclipse.microprofile.jwt.principal.JWTAuthContextInfo;
 import org.eclipse.microprofile.jwt.principal.JWTCallerPrincipal;
 import org.eclipse.microprofile.jwt.principal.JWTCallerPrincipalFactory;
 import org.eclipse.microprofile.jwt.principal.ParseException;
-import org.eclipse.microprofile.jwt.principal.JWTAuthContextInfo;
-import org.keycloak.TokenVerifier;
-import org.keycloak.common.VerificationException;
-import org.keycloak.representations.JsonWebToken;
+
+import java.util.Date;
+
 
 /**
  * A default implementation of the abstract JWTCallerPrincipalFactory that uses the Keycloak token parsing classes.
@@ -43,47 +44,60 @@ public class DefaultJWTCallerPrincipalFactory extends JWTCallerPrincipalFactory 
         JWTCallerPrincipal principal = null;
         try {
 
-            // Verify the token
-            TokenVerifier<MPAccessToken> verifier = TokenVerifier.create(token, MPAccessToken.class)
-                    .publicKey(authContextInfo.getSignerKey())
-                    .withChecks(new TokenVerifier.RealmUrlCheck(authContextInfo.getIssuedBy()));
-            if(authContextInfo.getExpGracePeriodSecs() > 0) {
-                verifier = verifier.withChecks(new ExpCheck<>(authContextInfo.getExpGracePeriodSecs()));
+            JWSVerifier verifier = new RSASSAVerifier(authContextInfo.getSignerKey());
+
+            // Parse token
+            SignedJWT signedJWT = SignedJWT.parse(token);
+
+            JWTClaimsSet claimsSet;
+            if (signedJWT.verify(verifier)) {
+                // Signing is OK, do some other checks.
+                claimsSet = signedJWT.getJWTClaimsSet();
+
+                checkExpired(claimsSet, authContextInfo.getExpGracePeriodSecs());
+                checkIssuer(claimsSet, authContextInfo.getIssuedBy());
+
+                String principalName = determinePrincipalName(claimsSet);
+
+                principal = new DefaultJWTCallerPrincipal(token, claimsSet, principalName);
+            } else {
+                throw new ParseException("Invalid signature");
             }
-            MPAccessToken jwt = verifier.getToken();
-            verifier.verify();
-            // Save the raw bearer token in the other claims for use by the JWTPrincipal#getRawToken() method
-            jwt.getOtherClaims().put("bearer_token", token);
-            // We have to determine the unique name to use as the principal name. It comes from upn, preferred_username, sub in that order
-            String principalName = (String) jwt.getOtherClaims().get("upn");
-            if(principalName == null) {
-                principalName = (String) jwt.getOtherClaims().get("preferred_username");
-                if(principalName == null) {
-                    principalName = jwt.getSubject();
-                }
-            }
-            principal = new DefaultJWTCallerPrincipal(jwt, principalName);
-        }
-        catch (VerificationException e) {
+
+        } catch (JOSEException | java.text.ParseException e) {
             throw new ParseException("Failed to verify the input token", e);
         }
         return principal;
     }
 
-    static class ExpCheck<T extends JsonWebToken> implements TokenVerifier.Predicate<T> {
-        private int expGracePeriodSecs;
-        ExpCheck(int expGracePeriodSecs) {
-            this.expGracePeriodSecs = expGracePeriodSecs;
+    private String determinePrincipalName(JWTClaimsSet claimsSet) throws java.text.ParseException {
+        // We have to determine the unique name to use as the principal name. It comes from upn, preferred_username, sub in that order
+        String principalName = claimsSet.getStringClaim("upn");
+        if (principalName == null) {
+            principalName = claimsSet.getStringClaim("preferred_username");
+            if (principalName == null) {
+                principalName = claimsSet.getSubject();
+            }
         }
-        @Override
-        public boolean test(T t) throws VerificationException {
-            // Take the expiration in seconds since epoch and convert to ms
-            long expMS = t.getExpiration();
-            expMS *= 1000;
-            long now = System.currentTimeMillis();
-            long expUpperMS = now + expGracePeriodSecs*1000;
-            // If expMS is in the past more than grace period ms
-            return expMS > expUpperMS;
+        return principalName;
+    }
+
+    private void checkIssuer(JWTClaimsSet claimsSet, String issuedBy) throws ParseException {
+        if (!issuedBy.equals(claimsSet.getIssuer())) {
+            throw new ParseException("Token has wrong issuer");
+        }
+    }
+
+    private void checkExpired(JWTClaimsSet claimsSet, int expGracePeriodSecs) throws ParseException {
+        if (expGracePeriodSecs == -1) {
+            // Is this a hack for the test only ?!
+            // see org.eclipse.microprofile.jwt.test.format.TestTokenValidation.testRIJWTCallerPrincipal()
+            return;
+        }
+        // TODO support only Java 8 and use LocalDateTime
+        Date limit = new Date(System.currentTimeMillis() + expGracePeriodSecs * 1000);
+        if (limit.after(claimsSet.getExpirationTime())) {
+            throw new ParseException("Token Expired");
         }
     }
 }

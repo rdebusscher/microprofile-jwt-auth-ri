@@ -35,6 +35,7 @@ import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.representations.JsonWebToken;
 
+import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,8 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.inject.Inject;
 
 /**
  * Basic token parsing and validation tests
@@ -59,6 +58,7 @@ public class TestTokenValidation {
 
     /**
      * Create a token string from the jwk-content1.json test resources to understand the Keycloak representation
+     *
      * @throws Exception
      */
     @Test
@@ -78,7 +78,7 @@ public class TestTokenValidation {
         System.out.printf("unique_username: %s\n", otherClaims.get("unique_username"));
         Map<String, Object> resourceAccess = (Map<String, Object>) otherClaims.get("resource_access");
         System.out.printf("resource_access(%s): keys:%s; %s\n", resourceAccess.getClass(), resourceAccess.keySet(), resourceAccess);
-        for(Map.Entry<String, Object> entry : resourceAccess.entrySet()) {
+        for (Map.Entry<String, Object> entry : resourceAccess.entrySet()) {
             Object value = resourceAccess.get(entry.getKey());
             System.out.printf("%s: %s(%s)\n", entry.getKey(), value, value.getClass());
         }
@@ -115,34 +115,35 @@ public class TestTokenValidation {
         String[] expectedRoleNames = {"role-in-realm", "user", "manager"};
         HashSet<String> missingRoles = new HashSet<>();
         for (String role : expectedRoleNames) {
-            if(!roles.contains(role)) {
+            if (!roles.contains(role)) {
                 missingRoles.add(role);
             }
         }
-        if(missingRoles.size() > 0) {
-            Assert.fail("There are missing roles: "+missingRoles);
+        if (missingRoles.size() > 0) {
+            Assert.fail("There are missing roles: " + missingRoles);
         }
         // Validate the groups
         Set<String> groups = callerPrincipal.getGroups();
         String[] expectedGroupNames = {"group1", "group2"};
         HashSet<String> missingGroups = new HashSet<>();
         for (String group : expectedGroupNames) {
-            if(!groups.contains(group)) {
+            if (!groups.contains(group)) {
                 missingGroups.add(group);
             }
         }
-        if(missingGroups.size() > 0) {
-            Assert.fail("There are missing groups: "+missingGroups);
+        if (missingGroups.size() > 0) {
+            Assert.fail("There are missing groups: " + missingGroups);
         }
 
         // Validate other claims
         Object authTime = callerPrincipal.getOtherClaim("auth_time");
-        Assert.assertTrue("auth_time is an Integer", authTime instanceof Integer);
-        Assert.assertEquals("auth_time as int is 1311280969", 1311280969, authTime);
+        Assert.assertTrue("auth_time is an Integer", authTime instanceof Long);
+        Assert.assertEquals("auth_time as int is 1311280969", 1311280969L, authTime);
     }
 
     /**
      * Validate that the updates jwk-content1.json verifies against current time
+     *
      * @throws Exception
      */
     @Test
@@ -160,6 +161,7 @@ public class TestTokenValidation {
 
     /**
      * Validate that a token that is past is exp claim should fail the parse verification
+     *
      * @throws Exception - expect a ParseException
      */
     @Test()
@@ -172,8 +174,7 @@ public class TestTokenValidation {
             JWTCallerPrincipal callerPrincipal = factory.parse(jwt, authContextInfo);
             Assert.fail("Was able to parse the token: " + callerPrincipal);
         } catch (ParseException e) {
-            Throwable cause = e.getCause();
-            System.out.printf("Failed as expected with cause: %s\n", cause.getMessage());
+            System.out.printf("Failed as expected with cause: %s\n", e.getMessage());
         }
     }
 
@@ -187,8 +188,7 @@ public class TestTokenValidation {
             JWTCallerPrincipal callerPrincipal = factory.parse(jwt, authContextInfo);
             Assert.fail("Was able to parse the token: " + callerPrincipal);
         } catch (ParseException e) {
-            Throwable cause = e.getCause();
-            System.out.printf("Failed as expected with cause: %s\n", cause.getMessage());
+            System.out.printf("Failed as expected with cause: %s\n", e.getMessage());
         }
     }
 
@@ -202,8 +202,7 @@ public class TestTokenValidation {
             JWTCallerPrincipal callerPrincipal = factory.parse(jwt, authContextInfo);
             Assert.fail("Was able to parse the token: " + callerPrincipal);
         } catch (ParseException e) {
-            Throwable cause = e.getCause();
-            System.out.printf("Failed as expected with cause: %s\n", cause.getMessage());
+            System.out.printf("Failed as expected with cause: %s\n", e.getMessage());
         }
     }
 
@@ -235,6 +234,7 @@ public class TestTokenValidation {
 
     /**
      * Utility main entry point to generate a new public/private key pair
+     *
      * @param args
      */
     public static void main(String[] args) {

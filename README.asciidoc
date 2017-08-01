@@ -17,3 +17,8 @@
 
 = microprofile-jwt-auth-ri
 A reference implementation for the microprofile-jwt-auth specification work
+
+1/8/2017 : principal module (jwt-auth-principal-ri) Rework from original code by Scott Stark.
+Idea is to remove dependency on KeyCloak at runtime.
+It may evolve in a separate RI or can be merged back to original repo.
+Changed the license header of the files which are heavily changed.
