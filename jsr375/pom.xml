@@ -39,6 +39,11 @@
             <version>7.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>javax.security.enterprise</groupId>
+            <artifactId>javax.security.enterprise-api</artifactId>
+            <version>1.0-b09</version>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -61,7 +66,7 @@
         </dependency>
 
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>

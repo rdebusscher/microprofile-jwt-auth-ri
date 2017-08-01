@@ -19,11 +19,12 @@
  */
 package org.eclipse.microprofile.jwt.identitystore;
 
+import org.eclipse.microprofile.jwt.WrappedCallerPrincipal;
+import org.eclipse.microprofile.jwt.credential.JWTCredential;
 import org.eclipse.microprofile.jwt.principal.JWTAuthContextInfo;
 import org.eclipse.microprofile.jwt.principal.JWTCallerPrincipal;
 import org.eclipse.microprofile.jwt.principal.JWTCallerPrincipalFactory;
 import org.eclipse.microprofile.jwt.principal.ParseException;
-import org.eclipse.microprofile.jwt.credential.JWTCredential;
 
 import javax.security.enterprise.credential.Credential;
 import javax.security.enterprise.identitystore.CredentialValidationResult;
@@ -39,7 +40,7 @@ public class DefaultJWTIdentityStore implements IdentityStore {
 
     @Override
     public CredentialValidationResult validate(Credential credential) {
-        if(credential instanceof JWTCredential) {
+        if (credential instanceof JWTCredential) {
             JWTCredential jwtCredential = JWTCredential.class.cast(credential);
             try {
                 String token = jwtCredential.getToken();
@@ -47,10 +48,10 @@ public class DefaultJWTIdentityStore implements IdentityStore {
                 JWTCallerPrincipalFactory factory = JWTCallerPrincipalFactory.instance();
                 JWTCallerPrincipal callerPrincipal = factory.parse(token, authContextInfo);
                 Set<String> groups = callerPrincipal.getGroups();
-                CredentialValidationResult result = new CredentialValidationResult(callerPrincipal, groups);
+
+                CredentialValidationResult result = new CredentialValidationResult(new WrappedCallerPrincipal(callerPrincipal), groups);
                 return result;
-            }
-            catch (ParseException e) {
+            } catch (ParseException e) {
                 e.printStackTrace();
             }
         }

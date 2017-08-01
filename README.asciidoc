@@ -22,3 +22,5 @@ A reference implementation for the microprofile-jwt-auth specification work
 Idea is to remove dependency on KeyCloak at runtime.
 It may evolve in a separate RI or can be merged back to original repo.
 Changed the license header of the files which are heavily changed.
+
+1/8/2017 : Java EE security API dependency only for 'JSR375 RI'
