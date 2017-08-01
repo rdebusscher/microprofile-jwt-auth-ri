@@ -44,7 +44,7 @@ public class JWTSecurityContext implements SecurityContext {
 
     @Override
     public boolean isUserInRole(String role) {
-        return delegate.isUserInRole(role);
+        return principal.getRoles().contains(role);
     }
 
     @Override
