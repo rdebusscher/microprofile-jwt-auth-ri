@@ -28,14 +28,13 @@ import org.eclipse.microprofile.jwt.principal.JWTAuthContextInfo;
  */
 public class JWTCredential implements Credential {
     private String token;
-    private JWTAuthContextInfo authContextInfo;
 
     /**
      * Parse out the token porition of a HTTP "Authentication: Bearer {token}"
      * @param authorizationHeader - HTTP Authentication header with Bearer ... value
      * @return a credential containing the token if the authorization header was for a bearer token, null otherwise
      */
-    public static JWTCredential parse(String authorizationHeader, JWTAuthContextInfo authContextInfo) {
+    public static JWTCredential parse(String authorizationHeader) {
         JWTCredential credential = null;
         if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
@@ -57,7 +56,4 @@ public class JWTCredential implements Credential {
         return token;
     }
 
-    public JWTAuthContextInfo getAuthContextInfo() {
-        return authContextInfo;
-    }
 }
