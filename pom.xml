@@ -50,9 +50,10 @@
     </dependencyManagement>
 
     <modules>
+        <module>principal</module>
         <module>jaxrs</module>
         <module>jsr375</module>
-        <module>principal</module>
+        <module>jaspic</module>
     </modules>
 
     <profiles>
